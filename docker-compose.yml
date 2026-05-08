@@ -65,6 +65,23 @@ services:
     networks:
       - laravel
 
+  node:
+    build:
+      context: .
+      dockerfile: docker/node/Dockerfile
+
+    container_name: laravel12-node
+
+    ports:
+      - "3000:3000"
+
+    volumes:
+      - ./node:/app
+      - /app/node_modules
+
+    networks:
+      - laravel
+
 networks:
   laravel:
 
