@@ -1,9 +1,11 @@
 <?php
 
+use App\Jobs\TestJob;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Http;
 
 Route::get('/', function () {
+    TestJob::dispatch();
     return view('welcome');
 });
 

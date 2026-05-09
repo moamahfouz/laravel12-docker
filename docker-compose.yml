@@ -60,7 +60,13 @@ services:
     container_name: laravel12-redis
 
     ports:
-      - "6379:6379"
+      - "6380:6379"
+
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
     networks:
       - laravel
@@ -81,6 +87,42 @@ services:
 
     networks:
       - laravel
+
+  queue:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+
+    command: php artisan queue:work
+
+    volumes:
+      - ./:/var/www
+
+    depends_on:
+      - redis
+      - mysql
+
+    networks:
+      - laravel
+
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+
+    command: php artisan schedule:work
+
+    volumes:
+      - ./:/var/www
+
+    depends_on:
+      - redis
+      - mysql
+
+    networks:
+      - laravel
+
 
 networks:
   laravel:
