@@ -23,6 +23,9 @@ RUN apt-get update && apt-get install -y \
     intl \
     zip
 
+# Install Redis PHP extension
+RUN pecl install redis && docker-php-ext-enable redis
+
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 

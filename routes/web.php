@@ -1,11 +1,11 @@
 <?php
 
-use App\Jobs\TestJob;
+use App\Jobs\UpdateUsersTableJob;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Http;
 
 Route::get('/', function () {
-    TestJob::dispatch();
+    UpdateUsersTableJob::dispatch();
     return view('welcome');
 });
 
