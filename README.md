@@ -1,59 +1,205 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Test App
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel 12 application skeleton running in a multi-service Docker environment with an integrated Node.js Express server, queue workers, and task scheduling.
 
-## About Laravel
+## Tech Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+| Service | Technology |
+|---------|-----------|
+| Backend | PHP 8.3, Laravel 12 |
+| Frontend | Vite, Tailwind CSS 4 |
+| Database | MySQL 8.4 |
+| Cache / Queue | Redis |
+| Web Server | Nginx (Alpine) |
+| Secondary API | Node.js 22, Express 4 |
+| Queue Worker | Laravel Horizon |
+| Task Scheduler | Laravel Scheduler |
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Docker Services
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+The application is orchestrated via Docker Compose with the following services:
 
-## Learning Laravel
+| Service | Container Name | Port | Description |
+|---------|---------------|------|-------------|
+| `app` | `laravel12-app` | — | PHP-FPM 8.3 application container |
+| `nginx` | `laravel12-nginx` | `8000:80` | Web server / reverse proxy |
+| `mysql` | `laravel12-mysql` | `3306:3306` | MySQL 8.4 database |
+| `redis` | `laravel12-redis` | `6380:6379` | Redis cache & queue broker |
+| `node` | `laravel12-node` | `3000:3000` | Express.js API server |
+| `queue` | — | — | Laravel Horizon queue worker |
+| `scheduler` | — | — | Laravel schedule worker |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+All services communicate over the shared `laravel` Docker network.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Database Credentials
 
-## Laravel Sponsors
+| Variable | Value |
+|----------|-------|
+| Database | `testdb` |
+| Root Password | `root` |
+| User | `laravel` |
+| Password | `112277` |
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## PHP Dockerfile
 
-### Premium Partners
+The `docker/php/Dockerfile` builds the app image from `php:8.3-fpm` and installs:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+- System dependencies: `git`, `curl`, `zip`, `unzip`, `libpng-dev`, `libonig-dev`, `libxml2-dev`, `libzip-dev`, `libicu-dev`, `nodejs`, `npm`
+- PHP extensions: `pdo_mysql`, `mbstring`, `exif`, `pcntl`, `bcmath`, `gd`, `intl`, `zip`
+- Redis PHP extension via PECL
+- Composer (latest)
+- Non-root user `appuser` (UID 1000)
 
-## Contributing
+## Node.js Dockerfile
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+The `docker/node/Dockerfile` builds the secondary API from `node:22-alpine`:
 
-## Code of Conduct
+- Installs dependencies from `node/package.json`
+- Exposes port `3000`
+- Runs `npm start` to launch the Express server
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Composer Configuration
 
-## Security Vulnerabilities
+### Required Packages
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `php` | `^8.2` | PHP runtime |
+| `laravel/framework` | `^12.0` | Laravel framework |
+| `laravel/horizon` | `^5.46` | Queue dashboard & worker management |
+| `laravel/tinker` | `^2.10.1` | Interactive REPL |
+
+### Dev Dependencies
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| `fakerphp/faker` | `^1.23` | Data seeding |
+| `laravel/pail` | `^1.2.2` | Log tailing |
+| `laravel/pint` | `^1.24` | Code styling |
+| `laravel/sail` | `^1.41` | Local Docker development |
+| `mockery/mockery` | `^1.6` | Mocking library |
+| `nunomaduro/collision` | `^8.6` | Error reporting |
+| `phpunit/phpunit` | `^11.5.50` | Testing framework |
+
+### Composer Scripts
+
+```bash
+# Full setup (install deps, generate key, migrate, build assets)
+composer run setup
+
+# Local development (runs server, queue, logs, and Vite concurrently)
+composer run dev
+
+# Run PHPUnit tests
+composer run test
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Docker & Docker Compose
+
+### Installation
+
+1. Clone the repository and navigate into it:
+
+```bash
+cd test-app
+```
+
+2. Copy the environment file:
+
+```bash
+cp .env.example .env
+```
+
+3. Start the Docker services:
+
+```bash
+docker compose up -d --build
+```
+
+4. Install PHP dependencies:
+
+```bash
+docker compose exec app composer install
+```
+
+5. Generate the application key:
+
+```bash
+docker compose exec app php artisan key:generate
+```
+
+6. Run database migrations:
+
+```bash
+docker compose exec app php artisan migrate
+```
+
+7. Install and build frontend assets:
+
+```bash
+docker compose exec app npm install
+docker compose exec app npm run build
+```
+
+### Access the Application
+
+| Service | URL |
+|---------|-----|
+| Laravel App | http://localhost:8000 |
+| Node API | http://localhost:3000 |
+| Node Health Check | http://localhost:3000/health |
+| MySQL | `localhost:3306` |
+| Redis | `localhost:6380` |
+
+### Useful Commands
+
+```bash
+# Fill users table with 10 test users
+docker compose exec app php artisan fill:users-db
+
+# View Horizon dashboard (if route is registered)
+# Visit /horizon in your browser
+
+# Tail application logs
+docker compose exec app php artisan pail
+
+# Run tests
+docker compose exec app php artisan test
+```
+
+## Project Structure Highlights
+
+```
+.
+├── app/
+│   ├── Console/Commands/FillUserCommand.php   # Artisan command to seed test users
+│   ├── Jobs/UpdateUsersTableJob.php            # Queue job to verify last 10 users
+│   └── Models/User.php                         # Eloquent User model
+├── docker/
+│   ├── php/Dockerfile                          # PHP-FPM image
+│   ├── node/Dockerfile                         # Node.js image
+│   └── nginx/default.conf                      # Nginx vhost
+├── node/
+│   ├── server.js                               # Express API entry point
+│   └── package.json                            # Node dependencies (Express 4)
+├── composer.json                               # PHP dependencies & scripts
+├── docker-compose.yml                          # Full stack orchestration
+└── package.json                                # Frontend dependencies (Vite, Tailwind)
+```
+
+## Key Features
+
+- **Multi-service Docker stack** — PHP-FPM, Nginx, MySQL, Redis, Node.js, Horizon, and Scheduler running together.
+- **Queue processing** — Laravel Horizon manages background jobs via Redis.
+- **Task scheduling** — Dedicated scheduler container runs `php artisan schedule:work`.
+- **Express API** — Secondary Node.js server available alongside the Laravel application.
+- **Artisan commands** — Includes `fill:users-db` for quick test data generation.
+- **Queue jobs** — `UpdateUsersTableJob` demonstrates queued updates to the users table.
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is open-sourced software licensed under the MIT license.
